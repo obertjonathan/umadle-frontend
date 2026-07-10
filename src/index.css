@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+/* App-wide base styles */
+body {
+  margin: 0;
+  min-height: 100svh;
+  background: #16171d;
+  color: #e5e4e7;
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Tile flip. `both` makes the 0% state apply during the
+   animation-delay, so a tile stays hidden (edge-on) until its turn. */
+@keyframes reveal {
+  0% {
+    transform: rotateX(-90deg);
+    opacity: 0;
+  }
+  100% {
+    transform: rotateX(0deg);
+    opacity: 1;
+  }
+}
+.animate-reveal {
+  animation: reveal 0.35s ease both;
+}
