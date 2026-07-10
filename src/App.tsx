@@ -1,24 +1,40 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { UMAS } from "./data/umas"
 import { STAT_KEYS } from "./data/types"
 import type { Uma } from "./data/types"
-import { compareGuess, pickRandomUma } from "./game/compare"
+import { compareGuess } from "./game/compare"
+import { dailyUma, todayKey } from "./game/daily"
+import { loadGuessIds, saveGuessIds } from "./game/storage"
 import { GuessRow } from "./components/GuessRow"
 import { GameResult } from "./components/GameResult"
 
 const MAX_GUESSES = 6
 
 function App() {
-  const [query, setQuery] = useState("")
-  const [guesses, setGuesses] = useState<Uma[]>([])
-  // target now has a setter so "Play again" can pick a fresh answer.
-  const [target, setTarget] = useState<Uma>(() => pickRandomUma(UMAS))
+  const dayKey = todayKey()
+  const target = dailyUma(UMAS, dayKey)
 
-  // --- Derived game state (computed every render, never stored) ---
+  const [query, setQuery] = useState("")
+
+  // Lazy initializer: on first render, rebuild the guess list from any ids
+  // saved in localStorage for today.
+  const [guesses, setGuesses] = useState<Uma[]>(() => {
+    return loadGuessIds(dayKey)
+      .map((id) => UMAS.find((u) => u.id === id))
+      .filter((u): u is Uma => u !== undefined)
+  })
+
+  useEffect(() => {
+    saveGuessIds(
+      dayKey,
+      guesses.map((g) => g.id),
+    )
+  }, [guesses, dayKey]) // the dependency array: re-run only when these change
+
+  // --- Derived game state ---
   const feedbacks = guesses.map((uma) => compareGuess(uma, target))
   const hasWon = feedbacks.some((f) => f.isWin)
   const outOfGuesses = guesses.length >= MAX_GUESSES
-  // A single "status" value is easier to reason about than juggling booleans.
   const status: "playing" | "won" | "lost" = hasWon
     ? "won"
     : outOfGuesses
@@ -27,7 +43,7 @@ function App() {
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
-    if (status !== "playing") return // game's over — ignore input
+    if (status !== "playing") return
     const match = UMAS.find(
       (uma) => uma.name.toLowerCase() === query.trim().toLowerCase(),
     )
@@ -37,23 +53,15 @@ function App() {
     setQuery("")
   }
 
-  // Reset everything and roll a new secret uma. Passed down to GameResult.
-  function handlePlayAgain() {
-    setGuesses([])
-    setQuery("")
-    setTarget(pickRandomUma(UMAS))
-  }
-
   const rows = Array.from({ length: MAX_GUESSES }, (_, i) => feedbacks[i])
 
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center gap-6 px-4 py-10">
       <h1 className="text-4xl font-bold tracking-tight text-white">🐎 Umadle</h1>
       <p className="text-center text-neutral-400">
-        Guess the uma by her three sizes (B / W / H) + height.
+        Guess today's uma by her three sizes (B / W / H) + height.
       </p>
 
-      {/* Guesses-left counter, only while the game is live. */}
       {status === "playing" && (
         <p className="text-sm text-neutral-500">
           Guess {guesses.length + 1} of {MAX_GUESSES}
@@ -73,8 +81,6 @@ function App() {
         ))}
       </div>
 
-      {/* While playing: show the input. When over: show the result card.
-          A ternary (cond ? a : b) picks between two chunks of JSX. */}
       {status === "playing" ? (
         <form onSubmit={handleSubmit} className="flex w-full max-w-sm gap-2">
           <input
@@ -97,11 +103,7 @@ function App() {
           </button>
         </form>
       ) : (
-        <GameResult
-          status={status}
-          target={target}
-          onPlayAgain={handlePlayAgain}
-        />
+        <GameResult status={status} target={target} />
       )}
     </main>
   )

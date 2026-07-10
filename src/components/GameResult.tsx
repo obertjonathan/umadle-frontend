@@ -2,16 +2,12 @@ import { STAT_KEYS } from "../data/types"
 import type { Uma } from "../data/types"
 import { umaImageUrl } from "../data/umaImage"
 
-// Note `onPlayAgain: () => void` — a FUNCTION passed in as a prop. This is
-// how a child talks back UP to its parent: the parent owns the reset logic
-// and hands it down; the button just calls it.
 type GameResultProps = {
   status: "won" | "lost"
   target: Uma
-  onPlayAgain: () => void
 }
 
-export function GameResult({ status, target, onPlayAgain }: GameResultProps) {
+export function GameResult({ status, target }: GameResultProps) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-lg border border-neutral-700 bg-neutral-900 p-6">
       <p
@@ -41,12 +37,9 @@ export function GameResult({ status, target, onPlayAgain }: GameResultProps) {
         ))}
       </div>
 
-      <button
-        onClick={onPlayAgain}
-        className="mt-2 rounded bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-500"
-      >
-        Play again
-      </button>
+      <p className="mt-2 text-sm text-neutral-500">
+        🕛 Come back tomorrow for a new uma!
+      </p>
     </div>
   )
 }
