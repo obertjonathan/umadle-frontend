@@ -5,9 +5,10 @@ import { umaImageUrl } from "../data/umaImage"
 type GameResultProps = {
   status: "won" | "lost"
   target: Uma
+  onPlayAgain?: () => void // practice mode only
 }
 
-export function GameResult({ status, target }: GameResultProps) {
+export function GameResult({ status, target, onPlayAgain }: GameResultProps) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-lg border border-neutral-700 bg-neutral-900 p-6">
       <p
@@ -37,9 +38,18 @@ export function GameResult({ status, target }: GameResultProps) {
         ))}
       </div>
 
-      <p className="mt-2 text-sm text-neutral-500">
-        🕛 Come back tomorrow for a new uma!
-      </p>
+      {onPlayAgain ? (
+        <button
+          onClick={onPlayAgain}
+          className="mt-2 rounded bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-500"
+        >
+          Play again
+        </button>
+      ) : (
+        <p className="mt-2 text-sm text-neutral-500">
+          🕛 Come back tomorrow for a new uma!
+        </p>
+      )}
     </div>
   )
 }
